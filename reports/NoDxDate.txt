@@ -1,4 +1,0 @@
-Patients with "Brain but no DiagnosisDate:
-5870
-6795
-32403
