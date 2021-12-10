@@ -1,9 +1,3 @@
-dummy = 4
-
-def square_plus(x):
-    return (dummy*dummy + x)
-
-
 # ZeroDates. Script converts strings from date formats (xx/xx/xxxx) into integer offset (e.g., 12 = 12 days after Day Zero).
 # Inputs: folderpath, patient_info_filename, zero_day_column_name
 # Outputs: All *_data_*.txt files in the folderpath are copied into "zeroed" subfolder, with all date strings converted to ints for offset days.
@@ -14,11 +8,13 @@ import os
 # Mandatory
 #  folderpath = 'Prostate_TAN'
 patient_info_filename = "data_clinical_patient.txt"
-zero_day_column_name = "FIRST_DATE_OF_METASTASIS"
+zero_day_column_name =  "DIAGNOSISDATE"   # "FIRST_DATE_OF_METASTASIS"
 
 # Optional
 debug_output = True
 day_offset_for_errors = -1234 # If this value shows up in output, an error occured (e.g. empty cell)
+date_format = '%Y-%M-%d'
+
 
 # Internal globals
 patient_zeros = {}
@@ -96,7 +92,7 @@ def transform_file(folderpath, filename):
                     row[date_index] = str(day_offset_for_errors)
                 else:
                     try:
-                        this_day = datetime.datetime.strptime(raw_date_text, '%m/%d/%Y')
+                        this_day = datetime.datetime.strptime(raw_date_text, date_format)
                         
                         delta = this_day - zero_day
                         days_as_str = str(delta.days)
