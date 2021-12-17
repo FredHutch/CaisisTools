@@ -7,8 +7,8 @@ import os
 
 # Mandatory
 #  folderpath = 'Prostate_TAN'
-patient_info_filename = "data_clinical_patient.txt"
-zero_day_column_name =  "DIAGNOSISDATE"   # "FIRST_DATE_OF_METASTASIS"
+#  patient_info_filename = "data_clinical_patient.txt"
+#  zero_day_column_name =  "DIAGNOSISDATE"   # "FIRST_DATE_OF_METASTASIS"
 
 # Optional
 debug_output = True
@@ -40,7 +40,7 @@ def transform_file(folderpath, filename):
     # Build list of columns with dates
     # if column has 'date' in part of row 5, transform it.
     date_cols = []
-    column_names = content[4].split('\t')
+    column_names = content[4].rstrip().split('\t')
     if debug_output:
         print(column_names)
     date_idx_list = [i for i, value in enumerate(column_names) if "DATE" in value]
@@ -70,6 +70,7 @@ def transform_file(folderpath, filename):
             row = row + [""] * (len(column_names) - len(row))
             if debug_output:
                 print('row len ' + str(len(row)))
+                print('row=('+str(row)+')')
             
             patient_id = row[0]
             zero_day = False
@@ -84,9 +85,10 @@ def transform_file(folderpath, filename):
             for i, date_index_val in enumerate(date_idx_list):
 
                 date_index = date_idx_list[i]
-                #print('date index ' + str(date_index))
+                print('date index for i='+str(i)+' is ' + str(date_index))
                 
                 raw_date_text = row[date_index]
+                
 
                 if zero_day == False:
                     row[date_index] = str(day_offset_for_errors)
@@ -120,20 +122,24 @@ def transform_file(folderpath, filename):
         f.writelines(content)
     
     if debug_output:
-        print("DONE transforming " + filename + "\n\n")
+        print("DONE transforming     " + filename + "\n\n")
 
 
-def zero_dates(folderpath):
+def zero_dates(folderpath, patient_info_filename = "data_clinical_patient.txt", zero_day_column_name =  "DIAGNOSISDATE" ):
     global debug_output
     global column_names
     global patient_zeros
     global patient_fails
 
     zero_day_column = -1
-    with open(folderpath + "/" + patient_info_filename) as f:
+    with open(folderpath + "/" + patient_info_filename, 'r', newline='\r\n') as f:
         content = f.readlines()
-        # print(content[4])
-        column_names = content[4].split('\t')
+        column_names = content[4].rstrip().split('\t')
+        print('=== In zero_dates, column_names     is...')
+        print("["+str(column_names)+"]")
+
+        print('=== In zero_dates, column_names[1]     is...')
+        print("["+str(column_names[1])+"], zdcn=["+str(zero_day_column_name)+"]")
         zero_day_column = column_names.index(zero_day_column_name)
 
     print("zero_day_column in " + patient_info_filename + " is " + str(zero_day_column))
@@ -143,12 +149,15 @@ def zero_dates(folderpath):
     patient_zeros = {}  # dict where key=patientId, value=datetime object of zero day.
     patient_fails = []  # list of patientIds without a zero day value.
 
+    # Find zero day for each patient.
     for x in range(5,len(content)): 
-        row = content[x].split('\t')
+        row = content[x].rstrip().split('\t')
         patient_id = row[0]
         zero_day_string = row[zero_day_column]
         try:
-            zero_date = datetime.datetime.strptime(zero_day_string, '%m/%d/%Y')
+            print('2nd ATTEMPT for pid '+patient_id+' using dateformat ('+str(date_format)+'), based on zero_day_string ['+zero_day_string+']')
+            zero_date = datetime.datetime.strptime(zero_day_string, date_format) #   '%m/%d/%Y')
+            print('zero_date for pid '+patient_id+' is '+str(zero_date)+', based on zero_day_string ['+zero_day_string+']')
             #    new_row = patient_id, zero_date
             patient_zeros[patient_id] = zero_date
         except Exception as e: 
@@ -171,3 +180,4 @@ def zero_dates(folderpath):
 
     print("--END--")
     print("Look for output files, with the prefix 'zerodate_'.")
+
