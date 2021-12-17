@@ -21,7 +21,7 @@ patient_zeros = {}
 patient_fails = []
 
 
-def transform_file(folderpath, filename):
+def transform_file(folderpath, filename, output_folder):
     global debug_output
     global day_offset_for_errors
     global column_names
@@ -116,7 +116,9 @@ def transform_file(folderpath, filename):
                 print(idx, row_final+"\n")
 
     output_filename = "zerodate_" + filename
-    file_to_open = data_folder / output_filename
+    output_data_folder = Path(output_folder)
+    file_to_open = output_data_folder / filename
+
     file2 = open(file_to_open, "w")
     with file_to_open.open("w") as f:
         f.writelines(content)
@@ -125,7 +127,7 @@ def transform_file(folderpath, filename):
         print("DONE transforming     " + filename + "\n\n")
 
 
-def zero_dates(folderpath, patient_info_filename = "data_clinical_patient.txt", zero_day_column_name =  "DIAGNOSISDATE" ):
+def zero_dates(folderpath, patient_info_filename = "data_clinical_patient.txt", zero_day_column_name =  "DIAGNOSISDATE", output_folder="." ):
     global debug_output
     global column_names
     global patient_zeros
@@ -135,11 +137,6 @@ def zero_dates(folderpath, patient_info_filename = "data_clinical_patient.txt", 
     with open(folderpath + "/" + patient_info_filename, 'r', newline='\r\n') as f:
         content = f.readlines()
         column_names = content[4].rstrip().split('\t')
-        print('=== In zero_dates, column_names     is...')
-        print("["+str(column_names)+"]")
-
-        print('=== In zero_dates, column_names[1]     is...')
-        print("["+str(column_names[1])+"], zdcn=["+str(zero_day_column_name)+"]")
         zero_day_column = column_names.index(zero_day_column_name)
 
     print("zero_day_column in " + patient_info_filename + " is " + str(zero_day_column))
@@ -155,9 +152,7 @@ def zero_dates(folderpath, patient_info_filename = "data_clinical_patient.txt", 
         patient_id = row[0]
         zero_day_string = row[zero_day_column]
         try:
-            print('2nd ATTEMPT for pid '+patient_id+' using dateformat ('+str(date_format)+'), based on zero_day_string ['+zero_day_string+']')
             zero_date = datetime.datetime.strptime(zero_day_string, date_format) #   '%m/%d/%Y')
-            print('zero_date for pid '+patient_id+' is '+str(zero_date)+', based on zero_day_string ['+zero_day_string+']')
             #    new_row = patient_id, zero_date
             patient_zeros[patient_id] = zero_date
         except Exception as e: 
@@ -176,7 +171,7 @@ def zero_dates(folderpath, patient_info_filename = "data_clinical_patient.txt", 
 
     for filename in files:
         if filename.startswith("data") and filename.endswith(".txt"):
-            transform_file(folderpath, filename)
+            transform_file(folderpath, filename, output_folder)
 
     print("--END--")
     print("Look for output files, with the prefix 'zerodate_'.")
