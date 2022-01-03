@@ -11,7 +11,7 @@ import os
 #  zero_day_column_name =  "DIAGNOSISDATE"   # "FIRST_DATE_OF_METASTASIS"
 
 # Optional
-debug_output = True
+debug_output = False
 day_offset_for_errors = -1234 # If this value shows up in output, an error occured (e.g. empty cell)
 date_format = '%Y-%M-%d'
 
@@ -85,7 +85,7 @@ def transform_file(folderpath, filename, output_folder):
             for i, date_index_val in enumerate(date_idx_list):
 
                 date_index = date_idx_list[i]
-                print('date index for i='+str(i)+' is ' + str(date_index))
+                # print('date index for i='+str(i)+' is ' + str(date_index))
                 
                 raw_date_text = row[date_index]
                 
