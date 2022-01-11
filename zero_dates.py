@@ -4,6 +4,7 @@
 import datetime
 from pathlib import Path
 import os
+import sys
 
 # Mandatory
 #  folderpath = 'Prostate_TAN'
@@ -13,7 +14,7 @@ import os
 # Optional
 debug_output = False
 day_offset_for_errors = -1234 # If this value shows up in output, an error occured (e.g. empty cell)
-date_format = '%Y-%M-%d'
+date_format = '%Y-%m-%d'
 
 
 # Internal globals
@@ -30,7 +31,9 @@ def transform_file(folderpath, filename, output_folder):
     
     if debug_output:
         print('START transforming ' + filename)
+    print('START transforming ' + filename)
 
+    
     data_folder = Path(folderpath)
     file_to_open = data_folder / filename
     print("file_to_open=[" + str(file_to_open) + "]")
@@ -76,12 +79,8 @@ def transform_file(folderpath, filename, output_folder):
             zero_day = False
             if patient_id in patient_zeros:
                 zero_day = patient_zeros[patient_id]
-                
-            if debug_output:
-                print("pid " + patient_id +"!")
-                print("zero for " + patient_id + " is " + str(zero_day))
 
-
+            # Process each column with "DATE" in its name.
             for i, date_index_val in enumerate(date_idx_list):
 
                 date_index = date_idx_list[i]
@@ -94,17 +93,18 @@ def transform_file(folderpath, filename, output_folder):
                     row[date_index] = str(day_offset_for_errors)
                 else:
                     try:
-                        this_day = datetime.datetime.strptime(raw_date_text, date_format)
-                        
+                        this_day = zero_day + datetime.timedelta(days=day_offset_for_errors)  # assume bad until string passes checks
+                        if (raw_date_text != 'NaT') and (raw_date_text != ''):
+                            this_day = datetime.datetime.strptime(raw_date_text, date_format)
                         delta = this_day - zero_day
                         days_as_str = str(delta.days)
-
-                        # print(str(date_index)+" converted ["+raw_date_text+"] to " + days_as_str )
                         row[date_index] = days_as_str
                     except Exception as e: 
-                        # print(str(date_index)+" zero day exception for ["+raw_date_text+"]" )
+                        print(str(date_index)+" zero day exception for ["+raw_date_text+"]" )
+                        type, value, traceback = sys.exc_info()
+                        print('Error ZERO_DAY_EXCEPTION %s: %s' % (value.filename, value.strerror))
                         row[date_index] = str(day_offset_for_errors)
-                        # print('exc in col ',str(date_index))
+
                 if date_index == len(row)-1:
                     if debug_output:
                         print("last column, value=",row[date_index])
@@ -115,7 +115,7 @@ def transform_file(folderpath, filename, output_folder):
             if debug_output:
                 print(idx, row_final+"\n")
 
-    output_filename = "zerodate_" + filename
+    # ----------------output_filename = "zerodate_" + filename
     output_data_folder = Path(output_folder)
     file_to_open = output_data_folder / filename
 
