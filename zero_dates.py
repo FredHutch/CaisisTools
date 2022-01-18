@@ -46,7 +46,7 @@ def transform_file(folderpath, filename, output_folder):
     column_names = content[4].rstrip().split('\t')
     if debug_output:
         print(column_names)
-    date_idx_list = [i for i, value in enumerate(column_names) if "DATE" in value]
+    date_idx_list = [i for i, value in enumerate(column_names) if "DATE" in value.upper()]
     print ("Date indices list : " + str(date_idx_list) +"\n")
     
     # Run through lines of file. If > 5th line, do transformation.
