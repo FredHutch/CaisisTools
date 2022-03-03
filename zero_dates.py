@@ -29,6 +29,7 @@ def transform_file(folderpath, filename, output_folder):
     global patient_zeros
     global patient_fails
     
+    is_patient_file = filename == "data_clinical_patient.txt"
     if debug_output:
         print('START transforming ' + filename)
     print('START transforming ' + filename)
@@ -40,15 +41,51 @@ def transform_file(folderpath, filename, output_folder):
     f = open(file_to_open)
     content = f.readlines()
 
+
+    # Add AGEATDIAGNOSIS column, as calculation of BIRTHDATE (a negative integer,from diagnosis.)
+    # e.g., BIRTHDATE=-3650 means age at diagnosis is exactly ABS(BIRTHDATE)/365 = 10 years old.
+    # We do it here, rather than upstream in column creation, to avoid duplicating date logic.
+    # The "{:-2]" strips the CRLF off the string, so we can add the new column.
+    if is_patient_file:
+        column_names.append("AGEATDIAGNOSIS")
+        print("Going to add AGEATDIAGNOSIS to raw_content...")
+        content[0] = content[0][:-2] +"\tAGEATDIAGNOSIS" + "\r\n"
+        content[1] = content[1][:-2]  +"\tAGEATDIAGNOSIS" + "\r\n"
+        content[2] = content[2][:-2]  +"\tNUMBER" + "\r\n"
+        content[3] = content[3][:-2]  +"\t1" + "\r\n"
+        content[4] = content[4][:-2]  +"\tAGEATDIAGNOSIS" + "\r\n"
+
+        print("============= HEADERS+1")
+        print(str(content[0]))
+        print(str(content[1]))
+        print(str(content[2]))
+        print(str(content[3]))
+        print(str(content[4]))
+        print(str(content[5]))
+
+
     # Build list of columns with dates
     # if column has 'date' in part of row 5, transform it.
-    date_cols = []
     column_names = content[4].rstrip().split('\t')
     if debug_output:
         print(column_names)
     date_idx_list = [i for i, value in enumerate(column_names) if "DATE" in value.upper()]
     print ("Date indices list : " + str(date_idx_list) +"\n")
-    
+
+    if is_patient_file:
+        # Find index of BIRTHDATE, to calculate AGEOFDIAGNOSIS later.
+        birthdate_index = -1
+        # for idx in column_names:
+        #     print("idx is...")
+        #     print(idx)
+        #     if column_names[idx] == "BIRTHDATE":
+        #         birthdate_index = idx
+        print("column_names is...")
+        print(column_names)
+        birthdate_index = column_names.index("BIRTHDATE")
+        print("birthdate_index is...")
+        print(birthdate_index)
+
     # Run through lines of file. If > 5th line, do transformation.
     for idx, val in enumerate(content):
         row = val.rstrip().split('\t')
@@ -109,6 +146,16 @@ def transform_file(folderpath, filename, output_folder):
                     if debug_output:
                         print("last column, value=",row[date_index])
                     row[date_index] = row[date_index]  # + "\n"
+
+            if is_patient_file:
+                # Calculate AGEATDIAGNOSIS, put in last column. One decimal place.
+                print("row[birthdate_index] is...")
+                print(str(row[birthdate_index]))
+                birthdate_as_number = int(row[birthdate_index])
+                print("birthdate_as_number...")
+                print(birthdate_as_number)
+                age_in_years = abs(birthdate_as_number)/365
+                row[len(row)-1] = "{:.1f}".format(age_in_years)
 
             row_final = "\t".join(row)+"\n"
             content[idx] = row_final
