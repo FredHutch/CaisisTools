@@ -46,14 +46,15 @@ def transform_file(folderpath, filename, output_folder):
     # e.g., BIRTHDATE=-3650 means age at diagnosis is exactly ABS(BIRTHDATE)/365 = 10 years old.
     # We do it here, rather than upstream in column creation, to avoid duplicating date logic.
     # The "{:-2]" strips the CRLF off the string, so we can add the new column.
+    # Do similar to add OS_STATUS and OS_MONTHS columns.
     if is_patient_file:
         column_names.append("AGEATDIAGNOSIS")
         print("Going to add AGEATDIAGNOSIS to raw_content...")
-        content[0] = content[0][:-2] +"\tAGEATDIAGNOSIS" + "\r\n"
-        content[1] = content[1][:-2]  +"\tAGEATDIAGNOSIS" + "\r\n"
-        content[2] = content[2][:-2]  +"\tNUMBER" + "\r\n"
-        content[3] = content[3][:-2]  +"\t1" + "\r\n"
-        content[4] = content[4][:-2]  +"\tAGEATDIAGNOSIS" + "\r\n"
+        content[0] = content[0][:-2] +"\tAGEATDIAGNOSIS" +"\tOS_STATUS" +"\tOS_MONTHS" + "\r\n"
+        content[1] = content[1][:-2]  +"\tAGEATDIAGNOSIS" +"\tOS_STATUS" +"\tOS_MONTHS" + "\r\n"
+        content[2] = content[2][:-2]  +"\tNUMBER" +"\tSTRING" +"\tNUMBER" + "\r\n"
+        content[3] = content[3][:-2]  +"\t1" +"\t1" +"\t1" + "\r\n"
+        content[4] = content[4][:-2]  +"\tAGEATDIAGNOSIS" +"\tOS_STATUS" +"\tOS_MONTHS" + "\r\n"
 
         print("============= HEADERS+1")
         print(str(content[0]))
@@ -83,8 +84,12 @@ def transform_file(folderpath, filename, output_folder):
         print("column_names is...")
         print(column_names)
         birthdate_index = column_names.index("BIRTHDATE")
-        print("birthdate_index is...")
-        print(birthdate_index)
+        print("birthdate_index = " + str(birthdate_index))
+        lastalivedate_index = column_names.index("LASTALIVEDATE")
+        print("lastalivedate_index = " + str(lastalivedate_index))
+        deathdate_index = column_names.index("DEATHDATE")
+        print("deathdate_index = " + str(deathdate_index))
+        
 
     # Run through lines of file. If > 5th line, do transformation.
     for idx, val in enumerate(content):
@@ -148,14 +153,24 @@ def transform_file(folderpath, filename, output_folder):
                     row[date_index] = row[date_index]  # + "\n"
 
             if is_patient_file:
-                # Calculate AGEATDIAGNOSIS, put in last column. One decimal place.
+                # Calculate AGEATDIAGNOSIS, OS_STATUS, OS_MONTHS, put in last 3 columns. One decimal place for age (years), 2 places for OS_MONTHS.
                 print("row[birthdate_index] is...")
                 print(str(row[birthdate_index]))
                 birthdate_as_number = int(row[birthdate_index])
                 print("birthdate_as_number...")
                 print(birthdate_as_number)
                 age_in_years = abs(birthdate_as_number)/365
-                row[len(row)-1] = "{:.1f}".format(age_in_years)
+                row[len(row)-3] = "{:.1f}".format(age_in_years)
+
+                is_dead = str(row[deathdate_index]) != "-1234"
+                os_status =  "alive"
+                if is_dead:
+                        os_status = "dead"
+                row[len(row)-2] = os_status
+
+                days_last_alive_or_death = max(int(row[deathdate_index]), int(row[lastalivedate_index]))
+                os_months = days_last_alive_or_death / 30
+                row[len(row)-1] = "{:.2f}".format(os_months)
 
             row_final = "\t".join(row)+"\n"
             content[idx] = row_final
