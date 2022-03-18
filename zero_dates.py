@@ -48,13 +48,21 @@ def transform_file(folderpath, filename, output_folder):
     # The "{:-2]" strips the CRLF off the string, so we can add the new column.
     # Do similar to add OS_STATUS and OS_MONTHS columns.
     if is_patient_file:
+        print("============= HEADERS original")
+        print(str(content[0]))
+        print(str(content[1]))
+        print(str(content[2]))
+        print(str(content[3]))
+        print(str(content[4]))
+        print(str(content[5]))
+
         column_names.append("AGEATDIAGNOSIS")
         print("Going to add AGEATDIAGNOSIS to raw_content...")
-        content[0] = content[0][:-2] +"\tAGEATDIAGNOSIS" +"\tOS_STATUS" +"\tOS_MONTHS" + "\r\n"
-        content[1] = content[1][:-2]  +"\tAGEATDIAGNOSIS" +"\tOS_STATUS" +"\tOS_MONTHS" + "\r\n"
-        content[2] = content[2][:-2]  +"\tNUMBER" +"\tSTRING" +"\tNUMBER" + "\r\n"
-        content[3] = content[3][:-2]  +"\t1" +"\t1" +"\t1" + "\r\n"
-        content[4] = content[4][:-2]  +"\tAGEATDIAGNOSIS" +"\tOS_STATUS" +"\tOS_MONTHS" + "\r\n"
+        content[0] = content[0][:-1] +"\tAGEATDIAGNOSIS" +"\tOS_STATUS" +"\tOS_MONTHS" + "\r\n"
+        content[1] = content[1][:-1]  +"\tAGEATDIAGNOSIS" +"\tOS_STATUS" +"\tOS_MONTHS" + "\r\n"
+        content[2] = content[2][:-1]  +"\tNUMBER" +"\tSTRING" +"\tNUMBER" + "\r\n"
+        content[3] = content[3][:-1]  +"\t1" +"\t1" +"\t1" + "\r\n"
+        content[4] = content[4][:-1]  +"\tAGEATDIAGNOSIS" +"\tOS_STATUS" +"\tOS_MONTHS" + "\r\n"
 
         print("============= HEADERS+1")
         print(str(content[0]))
@@ -160,16 +168,20 @@ def transform_file(folderpath, filename, output_folder):
                 print("birthdate_as_number...")
                 print(birthdate_as_number)
                 age_in_years = abs(birthdate_as_number)/365
+
                 row[len(row)-3] = "{:.1f}".format(age_in_years)
 
+
                 is_dead = str(row[deathdate_index]) != "-1234"
-                os_status =  "alive"
+                os_status =  "LIVING"
                 if is_dead:
-                        os_status = "dead"
+                        os_status = "DECEASED"
                 row[len(row)-2] = os_status
 
                 days_last_alive_or_death = max(int(row[deathdate_index]), int(row[lastalivedate_index]))
                 os_months = days_last_alive_or_death / 30
+                # if days_last_alive_or_death == 0:
+                #     os_months = 0.01  # Bit of a hack. KM estimate might not like zero months.
                 row[len(row)-1] = "{:.2f}".format(os_months)
 
             row_final = "\t".join(row)+"\n"
