@@ -162,11 +162,12 @@ def transform_file(folderpath, filename, output_folder):
 
             if is_patient_file:
                 # Calculate AGEATDIAGNOSIS, OS_STATUS, OS_MONTHS, put in last 3 columns. One decimal place for age (years), 2 places for OS_MONTHS.
-                print("row[birthdate_index] is...")
-                print(str(row[birthdate_index]))
+                
+                # print("row[birthdate_index] is...")
+                # print(str(row[birthdate_index]))
                 birthdate_as_number = int(row[birthdate_index])
-                print("birthdate_as_number...")
-                print(birthdate_as_number)
+                # print("birthdate_as_number...")
+                # print(birthdate_as_number)
                 age_in_years = abs(birthdate_as_number)/365
 
                 row[len(row)-3] = "{:.1f}".format(age_in_years)
